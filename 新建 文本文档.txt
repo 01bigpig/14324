@@ -1,0 +1,115 @@
+#include "stm32l476xx.h"
+#include "SysClock.h"
+#include "UART.h"
+
+#include <string.h>
+#include <stdio.h>
+
+// PA.5  <--> Green LED
+// PC.13 <--> Blue user button
+#define LED_PIN    5
+#define BUTTON_PIN 13
+#define RCC_AHB2ENR_GPIOAEN ((uint32_t)0x00000001U)
+#define RCC_AHB2ENR_GPIOCEN ((uint32_t)0x00000004U)
+void delay_ms(uint16_t time)
+{    
+   uint16_t i=0;  
+   while(time--)
+   {
+      i=12000;
+      while(i--) ;    
+   }
+ }
+int array_check(int array1[5],int array2[5])
+{
+	for(int j=0;j<5;j++)
+	{
+		if(array1[j]!=array2[j])
+		{
+			return 0;
+			break;
+		}	
+	}
+	return 1;
+}
+int main(void)
+{
+	System_Clock_Init(); // Switch System Clock = 80 MHz
+UART2_Init(); 
+	int t=0, a,i=0;
+	int check_array[5];
+	int I[5]={0,0,2,2,2};
+	int blank_space[5]={0,0,0,0,0},L[5]={0,1,0,0,2},O[5]={1,1,1,2,2},V[5]={0,0,0,1,2},E[5]={0,2,2,2,2},C[5]={1,0,1,0,2},number_2[5]={0,0,1,1,1},number_0[5]={1,1,1,1,1};
+// ****************************//
+	// USER CODE GOES HERE
+	// ****************************//
+RCC->AHB2ENR|= RCC_AHB2ENR_GPIOAEN;
+	GPIOA->MODER&=~(3UL<<10);
+	GPIOA->MODER|=1UL<<10;
+	GPIOA->OTYPER&=~(1UL<<5);	
+	// Configure PA5
+	// Configure PC13
+	uint32_t input;
+	RCC->AHB2ENR|=RCC_AHB2ENR_GPIOCEN;
+	GPIOC->MODER&=~(3UL<<26);
+	GPIOC->PUPDR&=~(3UL<<26);
+	while(1)
+	{
+		input=(GPIOC->IDR & 1UL<<13);
+		if(input==0)
+		{
+			GPIOA->ODR|=1UL<<5;
+			t++; 
+			delay_ms(300);
+			continue;
+			
+	}else
+		{
+			GPIOA->ODR&=~(1UL<<5);
+		}
+		if(t>1&t<5)
+		{
+		check_array[i]=1;
+		t=0;
+		i++;
+		}
+		if(t==1)
+		{
+		check_array[i]=0;
+		t=0;
+		i++;
+		}
+		if(t>=5)
+		{
+		check_array[i]=2;
+		t=0;
+			i++;
+		}
+		if(i==5)
+		{
+			if(array_check(check_array,I))
+			printf("I");
+			else if(array_check(check_array,blank_space))
+			printf(" ");
+			else if(array_check(check_array,L))
+			printf("L");
+			else if(array_check(check_array,O))
+			printf("O");
+			else if(array_check(check_array,E))
+			printf("E");
+			else if(array_check(check_array,V))
+				printf("V");
+			else if(array_check(check_array,C))
+				printf("C");
+			else if(array_check(check_array,number_2))
+				printf("2");
+			else if(array_check(check_array,number_0))
+				printf("0");
+			else
+				printf("DNE");
+			i=0;
+
+}
+
+	}
+}	
